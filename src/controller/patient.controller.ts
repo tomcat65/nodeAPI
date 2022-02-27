@@ -14,7 +14,7 @@ type ResultSet = [
 export const getPatients = async (
   req: Request,
   res: Response
-): Promise<Response<Patient[]>> => {
+): Promise<Response<HttpResponse>> => {
   console.info(
     `[${new Date().toLocaleString()}] Incoming ${req.method}${
       req.originalUrl
@@ -45,7 +45,7 @@ export const getPatients = async (
 export const getPatient = async (
   req: Request,
   res: Response
-): Promise<Response<Patient>> => {
+): Promise<Response<HttpResponse>> => {
   console.info(
     `[${new Date().toLocaleString()}] Incoming ${req.method}${
       req.originalUrl
@@ -54,7 +54,7 @@ export const getPatient = async (
   try {
     const pool = await connection();
     const result: ResultSet = await pool.query(QUERY.SELECT_PATIENT, [
-      req.params.patientId
+      req.params.patientId,
     ]);
     if ((result[0] as Array<ResultSet>).length > 0) {
       return res
@@ -88,135 +88,148 @@ export const getPatient = async (
 };
 
 export const createPatient = async (
-    req: Request,
-    res: Response
-  ): Promise<Response<Patient>> => {
-    console.info(
-      `[${new Date().toLocaleString()}] Incoming ${req.method}${
-        req.originalUrl
-      } Request from ${req.rawHeaders[0]} ${req.rawHeaders[1]}`
-    );
-    let patient:Patient={
-        ...req.body
-    }
-    try {
-      const pool = await connection();
-      const result: ResultSet = await pool.query(QUERY.CREATE_PATIENT,Object.values(patient));
-      patient={id:(result[0] as ResultSetHeader).insertId,...req.body};
-      return res
-        .status(Code.CREATED)
-        .send(
-          new HttpResponse(Code.CREATED, Status.CREATED, "Patient created", patient)
-        );
-    } catch (error: unknown) {
-      console.error(error);
-      return res
-        .status(Code.INTERNAL_SERVER_ERROR)
-        .send(
-          new HttpResponse(
-            Code.INTERNAL_SERVER_ERROR,
-            Status.INTERNAL_SERVER_ERROR,
-            "An error ocurred!"
-          )
-        );
-    }
+  req: Request,
+  res: Response
+): Promise<Response<HttpResponse>> => {
+  console.info(
+    `[${new Date().toLocaleString()}] Incoming ${req.method}${
+      req.originalUrl
+    } Request from ${req.rawHeaders[0]} ${req.rawHeaders[1]}`
+  );
+  let patient: Patient = {
+    ...req.body,
   };
-
-  export const updatePatient = async (
-    req: Request,
-    res: Response
-  ): Promise<Response<Patient>> => {
-    console.info(
-      `[${new Date().toLocaleString()}] Incoming ${req.method}${
-        req.originalUrl
-      } Request from ${req.rawHeaders[0]} ${req.rawHeaders[1]}`
+  try {
+    const pool = await connection();
+    const result: ResultSet = await pool.query(
+      QUERY.CREATE_PATIENT,
+      Object.values(patient)
     );
-    let patient:Patient={
-        ...req.body
-    }
-    try {
-      const pool = await connection();
-      const result: ResultSet = await pool.query(QUERY.SELECT_PATIENT, [
-        req.params.patientId
+    patient = { id: (result[0] as ResultSetHeader).insertId, ...req.body };
+    return res
+      .status(Code.CREATED)
+      .send(
+        new HttpResponse(
+          Code.CREATED,
+          Status.CREATED,
+          "Patient created",
+          patient
+        )
+      );
+  } catch (error: unknown) {
+    console.error(error);
+    return res
+      .status(Code.INTERNAL_SERVER_ERROR)
+      .send(
+        new HttpResponse(
+          Code.INTERNAL_SERVER_ERROR,
+          Status.INTERNAL_SERVER_ERROR,
+          "An error ocurred!"
+        )
+      );
+  }
+};
+
+export const updatePatient = async (
+  req: Request,
+  res: Response
+): Promise<Response<HttpResponse>> => {
+  console.info(
+    `[${new Date().toLocaleString()}] Incoming ${req.method}${
+      req.originalUrl
+    } Request from ${req.rawHeaders[0]} ${req.rawHeaders[1]}`
+  );
+  let patient: Patient = {
+    ...req.body,
+  };
+  try {
+    const pool = await connection();
+    const result: ResultSet = await pool.query(QUERY.SELECT_PATIENT, [
+      req.params.patientId,
+    ]);
+    if ((result[0] as Array<ResultSet>).length > 0) {
+      const result: ResultSet = await pool.query(QUERY.UPDATE_PATIENT, [
+        ...Object.values(patient),
+        req.params.patientId,
       ]);
-      if ((result[0] as Array<ResultSet>).length > 0) {
-        const result:ResultSet=await pool.query(QUERY.UPDATE_PATIENT,[...Object.values(patient),req.params.patientId])  
-        return res
-          .status(Code.OK)
-          .send(
-            new HttpResponse(Code.OK, Status.OK, "Patient updated", {...patient,id:req.params.patientId})
-          );
-      } else {
-        return res
-          .status(Code.NOT_FOUND)
-          .send(
-            new HttpResponse(
-              Code.NOT_FOUND,
-              Status.NOT_FOUND,
-              "Patient not updated because it was not found!"
-            )
-          );
-      }
-    } catch (error: unknown) {
-      console.error(error);
       return res
-        .status(Code.INTERNAL_SERVER_ERROR)
+        .status(Code.OK)
+        .send(
+          new HttpResponse(Code.OK, Status.OK, "Patient updated", {
+            ...patient,
+            id: req.params.patientId,
+          })
+        );
+    } else {
+      return res
+        .status(Code.NOT_FOUND)
         .send(
           new HttpResponse(
-            Code.INTERNAL_SERVER_ERROR,
-            Status.INTERNAL_SERVER_ERROR,
-            "An error ocurred!"
+            Code.NOT_FOUND,
+            Status.NOT_FOUND,
+            "Patient not updated because it was not found!"
           )
         );
     }
-  }; 
+  } catch (error: unknown) {
+    console.error(error);
+    return res
+      .status(Code.INTERNAL_SERVER_ERROR)
+      .send(
+        new HttpResponse(
+          Code.INTERNAL_SERVER_ERROR,
+          Status.INTERNAL_SERVER_ERROR,
+          "An error ocurred!"
+        )
+      );
+  }
+};
 
-  
-  export const deletePatient = async (
-    req: Request,
-    res: Response
-  ): Promise<Response<Patient>> => {
-    console.info(
-      `[${new Date().toLocaleString()}] Incoming ${req.method}${
-        req.originalUrl
-      } Request from ${req.rawHeaders[0]} ${req.rawHeaders[1]}`
-    );
-    let patient:Patient={
-        ...req.body
-    }
-    try {
-      const pool = await connection();
-      const result: ResultSet = await pool.query(QUERY.SELECT_PATIENT, [
-        req.params.patientId
+export const deletePatient = async (
+  req: Request,
+  res: Response
+): Promise<Response<HttpResponse>> => {
+  console.info(
+    `[${new Date().toLocaleString()}] Incoming ${req.method}${
+      req.originalUrl
+    } Request from ${req.rawHeaders[0]} ${req.rawHeaders[1]}`
+  );
+  let patient: Patient = {
+    ...req.body,
+  };
+  try {
+    const pool = await connection();
+    const result: ResultSet = await pool.query(QUERY.SELECT_PATIENT, [
+      req.params.patientId,
+    ]);
+    if ((result[0] as Array<ResultSet>).length > 0) {
+      const result: ResultSet = await pool.query(QUERY.DELETE_PATIENT, [
+        req.params.patientId,
       ]);
-      if ((result[0] as Array<ResultSet>).length > 0) {
-        const result:ResultSet=await pool.query(QUERY.DELETE_PATIENT,[req.params.patientId])  
-        return res
-          .status(Code.OK)
-          .send(
-            new HttpResponse(Code.OK, Status.OK, "Patient deleted")
-          );
-      } else {
-        return res
-          .status(Code.NOT_FOUND)
-          .send(
-            new HttpResponse(
-              Code.NOT_FOUND,
-              Status.NOT_FOUND,
-              "Patient not deleted because it was not found!"
-            )
-          );
-      }
-    } catch (error: unknown) {
-      console.error(error);
       return res
-        .status(Code.INTERNAL_SERVER_ERROR)
+        .status(Code.OK)
+        .send(new HttpResponse(Code.OK, Status.OK, "Patient deleted"));
+    } else {
+      return res
+        .status(Code.NOT_FOUND)
         .send(
           new HttpResponse(
-            Code.INTERNAL_SERVER_ERROR,
-            Status.INTERNAL_SERVER_ERROR,
-            "An error ocurred!"
+            Code.NOT_FOUND,
+            Status.NOT_FOUND,
+            "Patient not deleted because it was not found!"
           )
         );
     }
-  }; 
+  } catch (error: unknown) {
+    console.error(error);
+    return res
+      .status(Code.INTERNAL_SERVER_ERROR)
+      .send(
+        new HttpResponse(
+          Code.INTERNAL_SERVER_ERROR,
+          Status.INTERNAL_SERVER_ERROR,
+          "An error ocurred!"
+        )
+      );
+  }
+};

@@ -37,7 +37,7 @@ const getPatient = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const pool = yield (0, mysql_config_1.connection)();
         const result = yield pool.query(patient_query_1.QUERY.SELECT_PATIENT, [
-            req.params.patientId
+            req.params.patientId,
         ]);
         if (result[0].length > 0) {
             return res
@@ -83,10 +83,13 @@ const updatePatient = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const pool = yield (0, mysql_config_1.connection)();
         const result = yield pool.query(patient_query_1.QUERY.SELECT_PATIENT, [
-            req.params.patientId
+            req.params.patientId,
         ]);
         if (result[0].length > 0) {
-            const result = yield pool.query(patient_query_1.QUERY.UPDATE_PATIENT, [...Object.values(patient), req.params.patientId]);
+            const result = yield pool.query(patient_query_1.QUERY.UPDATE_PATIENT, [
+                ...Object.values(patient),
+                req.params.patientId,
+            ]);
             return res
                 .status(code_enum_1.Code.OK)
                 .send(new response_1.HttpResponse(code_enum_1.Code.OK, status_enum_1.Status.OK, "Patient updated", Object.assign(Object.assign({}, patient), { id: req.params.patientId })));
@@ -111,10 +114,12 @@ const deletePatient = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const pool = yield (0, mysql_config_1.connection)();
         const result = yield pool.query(patient_query_1.QUERY.SELECT_PATIENT, [
-            req.params.patientId
+            req.params.patientId,
         ]);
         if (result[0].length > 0) {
-            const result = yield pool.query(patient_query_1.QUERY.DELETE_PATIENT, [req.params.patientId]);
+            const result = yield pool.query(patient_query_1.QUERY.DELETE_PATIENT, [
+                req.params.patientId,
+            ]);
             return res
                 .status(code_enum_1.Code.OK)
                 .send(new response_1.HttpResponse(code_enum_1.Code.OK, status_enum_1.Status.OK, "Patient deleted"));
