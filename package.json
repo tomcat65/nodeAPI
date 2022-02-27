@@ -1,11 +1,11 @@
 {
   "name": "nodejsapi",
   "version": "1.0.0",
-  "description": "Node JS project with SQL and Docker",
+  "description": "Node JS API project with SQL and Docker",
   "main": "index.js",
   "scripts": {
     "start:build": "tsc -p .",
-    "start:dev": "nodemon --exec ts-node src/index.ts",
+    "start:dev": "nodemon .",
     "start:prod": "tsc -p . && NODE_ENV=prod node dist/index.js"
   },
   "author": "TomCat65",
